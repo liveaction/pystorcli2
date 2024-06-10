@@ -570,7 +570,12 @@ class Controllers(object):
         if "Number of Controllers" in response and response["Number of Controllers"] == 0:
             return []
         else:
-            return [ctl['Ctl'] for ctl in common.response_data_subkey(out, ['System Overview', 'IT System Overview'])]
+            return [
+                common.response_value(ctl, ["Ctl", "Ctrl"])
+                for ctl in common.response_data_subkey(
+                    out, ["System Overview", "IT System Overview"]
+                )
+            ]
 
     @ property
     def _ctls(self):

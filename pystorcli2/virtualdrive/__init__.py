@@ -102,7 +102,10 @@ class VirtualDrive(object):
         return common.response_data(out)['Virtual Drives'][0]
 
     def _response_properties_all(self, out):
-        return common.response_data(out)['VD{0} Properties'.format(self._vd_id)]
+        response = common.response_data(out)
+        if 'Virtual Drives' in response:
+            return response['Virtual Drives'][0]['VD Properties']
+        return response['VD{0} Properties'.format(self._vd_id)]
 
     @staticmethod
     def _response_operation_status(out):
@@ -237,9 +240,13 @@ class VirtualDrive(object):
             'all'
         ]
 
+        data = common.response_data(self._run(args))
+        if 'Virtual Drives' in data:
+            pds = data['Virtual Drives'][0]['PDs']
+        else:
+            pds = data['PDs for VD {0}'.format(self._vd_id)]
+
         drives = []
-        pds = common.response_data(self._run(args))[
-            'PDs for VD {0}'.format(self._vd_id)]
         for pd in pds:
             drive_encl_id, drive_slot_id = pd['EID:Slt'].split(':')
             drives.append(
@@ -327,10 +334,13 @@ class VirtualDrive(object):
             'all'
         ]
 
-        properties = self._response_properties_all(self._run(args))
-        if properties['Disk Cache Policy'] == 'Enabled':
+        value = common.response_value(
+            self._response_properties_all(self._run(args)),
+            ["Disk Cache Policy", "Drive Write Cache Policy"],
+        )
+        if value == 'Enabled':
             return 'on'
-        elif 'Default' in properties['Disk Cache Policy']:
+        elif 'Default' in value:
             return 'default'
         return 'off'
 
@@ -360,10 +370,13 @@ class VirtualDrive(object):
             'show',
         ]
 
-        properties = self._response_properties(self._run(args))
-        if 'AWB' in properties['Cache']:
+        value = common.response_value(
+            self._response_properties(self._run(args)),
+            ["Cache", "CurrentCache"],
+        )
+        if 'AWB' in value:
             return 'awb'
-        elif 'WB' in properties['Cache']:
+        elif 'WB' in value:
             return 'wb'
         return 'wt'
 
@@ -392,8 +405,11 @@ class VirtualDrive(object):
             'show',
         ]
 
-        properties = self._response_properties(self._run(args))
-        if properties['Cache'][0:2] == 'NR':
+        value = common.response_value(
+            self._response_properties(self._run(args)),
+            ["Cache", "CurrentCache"],
+        )
+        if 'NR' in value:
             return 'nora'
         return 'ra'
 
@@ -422,8 +438,11 @@ class VirtualDrive(object):
             'show',
         ]
 
-        properties = self._response_properties(self._run(args))
-        if properties['Cache'][-1] == 'D':
+        value = common.response_value(
+            self._response_properties(self._run(args)),
+            ["Cache", "CurrentCache"],
+        )
+        if value[-1] == 'D':
             return 'direct'
         return 'cached'
 

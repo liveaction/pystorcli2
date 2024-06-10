@@ -85,6 +85,24 @@ def response_setter(data: Dict[str, Dict[int, Dict[str,  Any]]]):
         return response_cmd(data)['Detailed Status'][0]['Value']
 
 
+def response_value(data: Dict[str, Dict[int, Dict[str,  Any]]], subset: List[str]):
+    """StorCLI json output parser for response data[key].
+       Also, it returns the data filtered by the first key found from the subset list.
+
+    Args:
+        data (dict): formatted output data from command line
+        subset (List[str]): list of keys to filter the data
+
+    Returns:
+        str: data value
+    """
+
+    for key in subset:
+        if key in data:
+            return data[key]
+    return ''
+
+
 def lower(func):
     """Decorator to lower returned function string.
 

@@ -41,6 +41,7 @@ class DriveState(Enum):
     Rbld = 'Rebuild'
     Missing = 'Missing'
     JBOD = 'JBOD'
+    UConf = 'Unconfigured'
 
     def __str__(self) -> str:
         return self.value
@@ -61,7 +62,8 @@ class DriveState(Enum):
             DriveState.Cpybck,
             DriveState.CBShld,
             DriveState.Rbld,
-            DriveState.JBOD
+            DriveState.JBOD,
+            DriveState.UConf,
         ]
 
         return self in good_states
@@ -111,6 +113,8 @@ class DriveState(Enum):
             return 'good'
         elif self == DriveState.JBOD:
             return 'jbod'
+        elif self == DriveState.UConf:
+            return 'unconfigured'
         else:
             raise ValueError('This status is not settable')
 
@@ -126,6 +130,7 @@ class DriveState(Enum):
             'unconfigured': DriveState.UGood,
             'unconfigured(good)': DriveState.UGood,
             'unconfigured(bad)': DriveState.UBad,
+            'online': DriveState.Onln,
         }
 
         # check for direct match

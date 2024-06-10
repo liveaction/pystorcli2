@@ -52,15 +52,19 @@ class DriveMetrics(object):
 
     @property
     def _resposne_state(self):
-        key_prefix = 'Drive /c{0}/e{1}/s{2}'.format(
-            self._drive.ctl_id,
-            self._drive.encl_id,
-            self._drive.id
-        )
-        detailed_info = self._show_all['{0} - Detailed Information'.format(
-            key_prefix)]
-        detailed_state = detailed_info['{0} State'.format(key_prefix)]
-        return detailed_state
+        data = self._show_all
+        if 'Drives List' in data:
+            return data['Drives List'][0]['Drive Detailed Information']
+        else:
+            key_prefix = 'Drive /c{0}/e{1}/s{2}'.format(
+                self._drive.ctl_id,
+                self._drive.encl_id,
+                self._drive.id
+            )
+            detailed_info = data['{0} - Detailed Information'.format(
+                key_prefix)]
+            detailed_state = detailed_info['{0} State'.format(key_prefix)]
+            return detailed_state
 
     @property
     def state(self) -> DriveState:
@@ -83,34 +87,48 @@ class DriveMetrics(object):
     def media_errors(self):
         """(str): number of media errors on drive
         """
-        return self._resposne_state['Media Error Count']
+        state = self._resposne_state
+        if 'LU/NS 0/- Properties' in state:
+            return state['LU/NS 0/- Properties']['Media Error Count']
+        return state['Media Error Count']
 
     @property
     @common.stringify
     def other_errors(self):
         """(str): number of other errors on drive
         """
-        return self._resposne_state['Other Error Count']
+        state = self._resposne_state
+        if 'LU/NS 0/- Properties' in state:
+            return state['LU/NS 0/- Properties']['Other Error Count']
+        return state['Other Error Count']
 
     @property
     @common.stringify
     def predictive_failure(self):
         """predictive failure on drive
         """
-        return self._resposne_state['Predictive Failure Count']
+        state = self._resposne_state
+        if 'LU/NS 0/- Properties' in state:
+            return state['LU/NS 0/- Properties']['Predictive Failure Count']
+        return state['Predictive Failure Count']
 
     @property
     def temperature(self):
         """temperature of drive in celsius
         """
-        return self._resposne_state['Drive Temperature'].split('C')[0].lstrip()
+        temp =  common.response_value(self._resposne_state,
+                                      ['Drive Temperature', 'Temperature'])
+        return temp.split('C')[0].lstrip()
 
     @property
     @common.upper
     def smart_alert(self):
         """(str): S.M.A.R.T alert flag on drive
         """
-        return self._resposne_state['S.M.A.R.T alert flagged by drive']
+        value = self._resposne_state
+        if 'S.M.A.R.T alert flagged by drive' in value:
+            return value['S.M.A.R.T alert flagged by drive']
+        return 'None'
 
     @property
     @common.stringify

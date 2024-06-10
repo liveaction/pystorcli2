@@ -98,11 +98,15 @@ class Drive(object):
         return common.response_data(out)['Drive Information'][0]
 
     def _response_attributes(self, out):
-        detailed_info = ('Drive /c{0}/e{1}/s{2}'
-                         ' - Detailed Information'.format(self._ctl_id, self._encl_id, self._slot_id))
-        attr = 'Drive /c{0}/e{1}/s{2} Device attributes'.format(
-            self._ctl_id, self._encl_id, self._slot_id)
-        return common.response_data(out)[detailed_info][attr]
+        data = common.response_data(out)
+        if 'Drives List' in data:
+            return data['Drives List'][0]['Drive Detailed Information']
+        else:
+            detailed_info = ('Drive /c{0}/e{1}/s{2}'
+                            ' - Detailed Information'.format(self._ctl_id, self._encl_id, self._slot_id))
+            attr = 'Drive /c{0}/e{1}/s{2} Device attributes'.format(
+                self._ctl_id, self._encl_id, self._slot_id)
+            return data[detailed_info][attr]
 
     def _run(self, args, **kwargs):
         args = args[:]
@@ -194,7 +198,8 @@ class Drive(object):
             'show',
             'all'
         ]
-        return self._response_attributes(self._run(args))['SN']
+        attr = self._response_attributes(self._run(args))
+        return common.response_value(attr, ['SN', 'Serial Number'])
 
     @property
     @common.upper
@@ -216,7 +221,8 @@ class Drive(object):
             'show',
             'all'
         ]
-        return self._response_attributes(self._run(args))['Firmware Revision']
+        attr = self._response_attributes(self._run(args))
+        return common.response_value(attr, ['Firmware Revision', 'Firmware Revision Level'])
 
     @property
     def device_speed(self):
@@ -226,7 +232,8 @@ class Drive(object):
             'show',
             'all'
         ]
-        return self._response_attributes(self._run(args))['Device Speed']
+        attr = self._response_attributes(self._run(args))
+        return common.response_value(attr, ['Device Speed', 'Capable Speed'])
 
     @property
     def link_speed(self):
@@ -236,7 +243,10 @@ class Drive(object):
             'show',
             'all'
         ]
-        return self._response_attributes(self._run(args))['Link Speed']
+        attr = self._response_attributes(self._run(args))
+        if 'Path Information' in attr:
+            return attr['Path Information']['NegotiatedSpeed']
+        return attr['Link Speed']
 
     @property
     def ctl_id(self):
@@ -405,8 +415,8 @@ class Drive(object):
             'show'
         ]
 
-        state = self._response_properties(self._run(args))['State']
-
+        out = self._response_properties(self._run(args))
+        state = common.response_value(out, ['Status', 'State'])
         return DriveState.from_string(state)
 
     @state.setter
